@@ -1,0 +1,81 @@
+--1. Посчитаем общее количество самоубийств за каждый год во всех странах:
+SELECT 
+    year, 
+    SUM(count_of_suicides) AS total_suicides
+FROM db_suicides
+GROUP BY year
+ORDER BY total_suicides DESC;
+
+--2. Посчитаем общее количество самоубийств в каждой стране с 1985 по 2016 и ограничим до 20, потому что в таблице 101 страна:
+SELECT 
+	country, 
+	SUM(count_of_suicides) AS total_suicides
+FROM db_suicides
+GROUP BY country
+ORDER BY total_suicides DESC
+LIMIT 20;
+
+--3. Посмотрим на 20 стран с минимальным количеством суицида за этот период:
+SELECT country, SUM(count_of_suicides) AS total_suicides
+FROM db_suicides
+GROUP BY country
+ORDER BY total_suicides ASC
+LIMIT 20;
+
+--4. Посчитаем, какие возрастные группы и пол имеют самый высокий уровень самоубийств за период с 1985 по 2016 год:
+SELECT 
+    age, 
+    sex, 
+    SUM(count_of_suicides) AS total_suicides
+FROM db_suicides
+GROUP BY age, sex
+ORDER BY total_suicides DESC;
+
+--5. В каком году было больше всего самоубийств в каждой стране?
+WITH suicides_per_year AS (
+    SELECT
+        country,
+        year,
+        SUM(count_of_suicides) AS suicides_count,
+        RANK() OVER (PARTITION BY country ORDER BY SUM(count_of_suicides) DESC) AS max_suicides
+    FROM db_suicides
+    GROUP BY country, year)
+SELECT
+    country,
+    year AS year_with_most_suicides,
+    suicides_count AS max_suicides_count
+FROM suicides_per_year
+WHERE max_suicides = 1
+ORDER BY max_suicides_count DESC;
+
+--6. Посмотрим количество самоубийств в России за каждый год в период с 1985 по 2016
+SELECT 
+	country,
+	year,
+	SUM(count_of_suicides) AS suicides_count
+FROM db_suicides
+WHERE country LIKE 'Russian Federation'
+GROUP BY year
+ORDER BY year ASC;
+
+--7. Посмотрим как влияет ВВП на количество самоубийств в России с 1989 по 2015 год
+SELECT 
+	country,
+	year,
+	SUM(count_of_suicides) AS suicides_count,
+	gdp_per_capita_dollars AS gdp_capita
+FROM db_suicides
+WHERE country LIKE 'Russian Federation'
+GROUP BY year
+ORDER BY year ASC;
+
+-- 8. Посмотрим соотношение cамоубийств по возрасту и полу в России с 1989 по 2015
+SELECT 
+	country,
+	sex,
+	age,
+	SUM(count_of_suicides) AS suicides_count
+FROM db_suicides
+WHERE country LIKE 'Russian Federation'
+GROUP BY sex, age
+ORDER BY suicides_count DESC;
